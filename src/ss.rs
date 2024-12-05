@@ -1,7 +1,7 @@
 use num_integer::Roots;
 use rand;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Point<const D: usize> {
     pub coordinates: [f32; D],
     pub index: usize,
@@ -96,23 +96,23 @@ impl<const D: usize> SetSystem<D> {
     pub fn build_adjacency(
         &self,
     ) -> (
-        Vec<Vec<&Set<D>>>,
-        Vec<Vec<&Set<D>>>,
-        Vec<Vec<&Point<D>>>,
-        Vec<Vec<&Point<D>>>,
+        Vec<Vec<usize>>,
+        Vec<Vec<usize>>,
+        Vec<Vec<usize>>,
+        Vec<Vec<usize>>,
     ) {
-        let mut sets_adj = vec![Vec::<&Point<D>>::new(); self.sets.len()];
-        let mut points_adj = vec![Vec::<&Set<D>>::new(); self.points.len()];
-        let mut sets_adj_complement = vec![Vec::<&Point<D>>::new(); self.sets.len()];
-        let mut points_adj_complement = vec![Vec::<&Set<D>>::new(); self.points.len()];
+        let mut sets_adj = vec![Vec::<usize>::new(); self.sets.len()];
+        let mut points_adj = vec![Vec::<usize>::new(); self.points.len()];
+        let mut sets_adj_complement = vec![Vec::<usize>::new(); self.sets.len()];
+        let mut points_adj_complement = vec![Vec::<usize>::new(); self.points.len()];
         for p in self.points.iter() {
             for s in self.sets.iter() {
                 if s.points[p.index] {
-                    sets_adj[s.index].push(&p);
-                    points_adj[p.index].push(&s);
+                    sets_adj[s.index].push(p.index);
+                    points_adj[p.index].push(s.index);
                 } else {
-                    sets_adj_complement[s.index].push(&p);
-                    points_adj_complement[p.index].push(&s);
+                    sets_adj_complement[s.index].push(p.index);
+                    points_adj_complement[p.index].push(s.index);
                 }
             }
         }
