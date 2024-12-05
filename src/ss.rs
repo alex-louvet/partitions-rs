@@ -1,5 +1,4 @@
 use num_integer::Roots;
-use rand;
 
 #[derive(Debug, Clone)]
 pub struct Point<const D: usize> {
@@ -22,23 +21,23 @@ pub struct Point<const D: usize> {
 #[derive(Debug)]
 pub struct Set<const D: usize> {
     pub points: Vec<bool>,
-    pub weight: i32,
+    // pub weight: i32,
     pub index: usize,
 }
 
-impl<const D: usize> Set<D> {
-    pub fn increase(&mut self) {
-        self.weight += 1;
-    }
+// impl<const D: usize> Set<D> {
+//     pub fn increase(&mut self) {
+//         self.weight += 1;
+//     }
 
-    pub fn decrease(&mut self) {
-        self.weight -= 1;
-    }
+//     pub fn decrease(&mut self) {
+//         self.weight -= 1;
+//     }
 
-    pub fn reset(&mut self) {
-        self.weight = 0;
-    }
-}
+//     pub fn reset(&mut self) {
+//         self.weight = 0;
+//     }
+// }
 
 // impl<'a, const D: usize> Set<'a, D> {
 //     pub fn build_adjacency(&mut self, pts: Vec<&'a Point<D>>) {
@@ -76,21 +75,17 @@ impl<const D: usize> SetSystem<D> {
             for i in 0..n.nth_root(D as u32) {
                 let mut temp: Vec<bool> = vec![false; n as usize];
                 for p in points.iter() {
-                    if p.coordinates[d] * f32::powf(n as f32, 1.0 / (D as f32)) > i as f32 {
-                        temp[p.index] = true;
-                    } else {
-                        temp[p.index] = false;
-                    }
+                    temp[p.index] =
+                        p.coordinates[d] * f32::powf(n as f32, 1.0 / (D as f32)) > i as f32
                 }
                 sets.push(Set {
                     points: temp,
-                    weight: 0,
                     index,
                 });
                 index += 1;
             }
         }
-        return SetSystem { points, sets };
+        SetSystem { points, sets }
     }
 
     pub fn build_adjacency(
