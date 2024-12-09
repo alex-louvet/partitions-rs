@@ -1,4 +1,5 @@
 use num_integer::Roots;
+use std::{fs, io::Write};
 
 #[derive(Debug, Clone)]
 pub struct Point<const D: usize> {
@@ -118,5 +119,22 @@ impl<const D: usize> SetSystem<D> {
             sets_adj,
             sets_adj_complement,
         )
+    }
+
+    pub fn to_file(&self, filename: &str) -> () {
+        let mut file = fs::File::create(filename).expect("Fail to create file");
+        for x in self.points.iter() {
+            for c in x.coordinates.iter() {
+                write!(file, "{},", c).expect("Fail to write");
+            }
+            write!(file, "\n").expect("Fail to write");
+        }
+        write!(file, "sets\n").expect("Fail to write");
+        for x in self.sets.iter() {
+            for c in x.points.iter() {
+                write!(file, "{},", *c as i8).expect("Fail to write");
+            }
+            write!(file, "\n").expect("Fail to write");
+        }
     }
 }
