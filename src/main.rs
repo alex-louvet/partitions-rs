@@ -3,18 +3,24 @@ use rand::Rng;
 use ss::Point;
 use ss::Set;
 use ss::SetSystem;
+use std::env;
 use std::time::Instant;
 
 mod ss;
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
     const D: usize = 2;
-    const N: i32 = 8192;
-    const T: i32 = 128;
-    let ss: SetSystem<D> = SetSystem::grid(N);
+    let n: i32 = args[1]
+        .parse::<i32>()
+        .expect("n can not be interpreted as i32");
+    let t: i32 = args[2]
+        .parse::<i32>()
+        .expect("t can not be interpreted as i32");
+    let ss: SetSystem<D> = SetSystem::grid(n);
     ss.to_file("ss.txt");
     // let (pin, pout, sin, sout) = ss.build_adjacency();
-    let ss2 = part_min(&ss, T);
+    let ss2 = part_min(&ss, t);
     // for p in ss2.points {
     //     println!("{:?}", p.coordinates);
     // }
