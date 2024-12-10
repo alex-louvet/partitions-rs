@@ -1,8 +1,7 @@
 use num_integer::Roots;
 use rand::seq::SliceRandom;
-use rulinalg::matrix::decomposition::{Decomposition, PartialPivLu, LUP};
+use rulinalg::matrix::decomposition::PartialPivLu;
 use rulinalg::matrix::Matrix;
-use rulinalg::vector::Vector;
 use std::{fs, io::Write};
 
 #[derive(Debug, Clone)]
