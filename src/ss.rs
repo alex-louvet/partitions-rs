@@ -1,4 +1,8 @@
 use num_integer::Roots;
+use rand::seq::SliceRandom;
+use rulinalg::matrix::decomposition::{Decomposition, PartialPivLu, LUP};
+use rulinalg::matrix::Matrix;
+use rulinalg::vector::Vector;
 use std::{fs, io::Write};
 
 #[derive(Debug, Clone)]
@@ -89,7 +93,7 @@ impl<const D: usize> SetSystem<D> {
         SetSystem { points, sets }
     }
 
-    pub fn rhs(n: i32) -> SetSystem<D> {
+    pub fn rhs(n: i32, m: i32) -> SetSystem<D> {
         let mut points = Vec::new();
         for i in 0..n {
             let mut temp = [0.; D];
@@ -102,20 +106,30 @@ impl<const D: usize> SetSystem<D> {
             });
         }
         let mut sets = Vec::new();
-        let mut index: usize = 0;
-        for d in 0..D {
-            for i in 0..n.nth_root(D as u32) {
-                let mut temp: Vec<bool> = vec![false; n as usize];
-                for p in points.iter() {
-                    temp[p.index] =
-                        p.coordinates[d] * f32::powf(n as f32, 1.0 / (D as f32)) > i as f32
-                }
-                sets.push(Set {
-                    points: temp,
-                    index,
-                });
-                index += 1;
+        for j in 0..m as usize {
+            let sample: Vec<_> = points.choose_multiple(&mut rand::thread_rng(), D).collect();
+            let mut v = Vec::new();
+            for s in sample.iter() {
+                v.extend(s.coordinates);
             }
+            let mat = Matrix::new(D, D, v);
+            let b = vector![1.0;D];
+            let lu = PartialPivLu::decompose(mat).expect("Matrix is invertible");
+            let y = lu.solve(b).expect("Matrix is invertible.");
+            let mut set = vec![false; points.len()];
+            for (i, p) in points.iter().enumerate() {
+                let mut temp = 0.0;
+                for k in 0..D {
+                    temp += p.coordinates[k] as f32 * y[k]
+                }
+                if temp > 1.0 {
+                    set[i] = true;
+                }
+            }
+            sets.push(Set {
+                points: set,
+                index: j,
+            });
         }
         SetSystem { points, sets }
     }

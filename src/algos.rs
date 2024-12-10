@@ -13,7 +13,10 @@ pub fn part_min<const D: usize>(ss: &SetSystem<D>, t: i32) -> SetSystem<D> {
     let m = ss.sets.len();
     let mut rng = rand::thread_rng();
 
+    let now = Instant::now();
     let (_pin, _pout, sin, sout) = ss.build_adjacency();
+    let elapsed = now.elapsed();
+    println!("Building adjacency took: {:.3?}", elapsed);
 
     let now = Instant::now();
     //Build result points and sets vectors
@@ -26,7 +29,7 @@ pub fn part_min<const D: usize>(ss: &SetSystem<D>, t: i32) -> SetSystem<D> {
     //List all points not yet in  a part
     let mut available_pts: Vec<bool> = vec![true; n];
     let mut pt_weight: Vec<u128> = vec![0; n];
-    let mut set_weight: Vec<u128> = vec![0; n];
+    let mut set_weight: Vec<u128> = vec![0; m];
 
     let bar = ProgressBar::new(t as u64);
     //Part building
@@ -41,7 +44,7 @@ pub fn part_min<const D: usize>(ss: &SetSystem<D>, t: i32) -> SetSystem<D> {
         // }
 
         //let mut part_weight: u128 = 0;
-        let mut intersect_part: Vec<bool> = vec![false; n];
+        let mut intersect_part: Vec<bool> = vec![false; m];
 
         let mut temp: Vec<usize> = Vec::new();
         for i in available_pts.iter().enumerate() {
