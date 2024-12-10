@@ -89,6 +89,37 @@ impl<const D: usize> SetSystem<D> {
         SetSystem { points, sets }
     }
 
+    pub fn rhs(n: i32) -> SetSystem<D> {
+        let mut points = Vec::new();
+        for i in 0..n {
+            let mut temp = [0.; D];
+            for j in 0..D {
+                temp[j] = rand::random::<f32>();
+            }
+            points.push(Point {
+                coordinates: temp,
+                index: i as usize,
+            });
+        }
+        let mut sets = Vec::new();
+        let mut index: usize = 0;
+        for d in 0..D {
+            for i in 0..n.nth_root(D as u32) {
+                let mut temp: Vec<bool> = vec![false; n as usize];
+                for p in points.iter() {
+                    temp[p.index] =
+                        p.coordinates[d] * f32::powf(n as f32, 1.0 / (D as f32)) > i as f32
+                }
+                sets.push(Set {
+                    points: temp,
+                    index,
+                });
+                index += 1;
+            }
+        }
+        SetSystem { points, sets }
+    }
+
     pub fn build_adjacency(
         &self,
     ) -> (
