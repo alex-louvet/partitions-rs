@@ -233,7 +233,7 @@ fn update_weight<const D: usize>(
     start: usize,
 ) -> u32 {
     if s.points[start] {
-        for l in (n as i32 / t - 1) as usize..=0 {
+        for l in ((n as i32 / t) - 2) as usize..=0 {
             for k in sout.iter() {
                 if *k == tosort[l].0 {
                     return initial_weight + 1;
@@ -241,7 +241,7 @@ fn update_weight<const D: usize>(
             }
         }
     } else {
-        for l in (n as i32 / t - 1) as usize..=0 {
+        for l in ((n as i32 / t) - 2) as usize..=0 {
             for k in sin.iter() {
                 if *k == tosort[l].0 {
                     return initial_weight + 1;
