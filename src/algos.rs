@@ -1,6 +1,7 @@
 use crate::ss::{Point, Set, SetSystem};
 use indicatif::ProgressBar;
 use rand::Rng;
+use rayon::prelude::*;
 use std::time::Instant;
 
 pub fn intersects<const D: usize>((i, j): (usize, usize), s: &Set<D>) -> bool {
@@ -127,4 +128,188 @@ pub fn part_min<const D: usize>(ss: &SetSystem<D>, t: i32) -> SetSystem<D> {
         points: res_points,
         sets: res_sets,
     }
+}
+
+pub fn part_at_once<const D: usize>(ss: &SetSystem<D>, t: i32, k: i32) -> SetSystem<D> {
+    //SetSystem constants
+    let n = ss.points.len();
+    let m = ss.sets.len();
+    let mut rng = rand::thread_rng();
+
+    let now = Instant::now();
+    let (_pin, _pout, sin, sout) = ss.build_adjacency();
+    let elapsed = now.elapsed();
+    println!("Building adjacency took: {:.3?}", elapsed);
+
+    let now = Instant::now();
+    //Build result points and sets vectors
+    let mut res_sets: Vec<Set<D>> = Vec::new();
+    let mut res_points: Vec<Point<D>> = Vec::new();
+    for p in ss.points.iter() {
+        res_points.push(p.clone());
+    }
+
+    //List all points not yet in  a part
+    let mut available_pts: Vec<bool> = vec![true; n];
+    let mut set_weight: Vec<u128> = vec![0; m];
+
+    let bar = ProgressBar::new(t as u64);
+    //Part building
+    for i in 0..t - 1 {
+        bar.inc(1);
+        let mut part: Vec<bool> = vec![false; n];
+
+        let mut temp: Vec<usize> = Vec::new();
+        for l in available_pts.iter().enumerate() {
+            if let (j, true) = l {
+                temp.push(j);
+            }
+        }
+        let start = temp[rng.gen_range(0..temp.len())];
+        part[start] = true;
+        available_pts[start] = false;
+        let distances = distance(&ss, &available_pts, start, k, &set_weight, &sin, &sout);
+        let mut tosort: Vec<(usize, &u128)> = Vec::new();
+        for x in distances.iter().enumerate() {
+            if available_pts[x.0] {
+                tosort.push(x);
+            }
+        }
+        tosort.sort_by(|a, b| a.1.cmp(&b.1));
+        for l in 0..(n as i32 / t - 1) as usize {
+            part[tosort[l].0] = true;
+            available_pts[tosort[l].0] = false;
+        }
+        set_weight = (0..m)
+            .into_par_iter()
+            .map(|j| {
+                update_weight(
+                    &ss.sets[j],
+                    &sout[j],
+                    &sin[j],
+                    set_weight[j],
+                    &tosort,
+                    n,
+                    t,
+                    start,
+                )
+            })
+            .collect();
+        res_sets.push(Set {
+            points: part,
+            index: (i + 1) as usize,
+        });
+    }
+    bar.inc(1);
+    let mut part: Vec<bool> = vec![false; n];
+    for x in available_pts.iter().enumerate() {
+        if let (p, true) = x {
+            part[p] = true
+        }
+    }
+    res_sets.push(Set {
+        points: part,
+        index: t as usize,
+    });
+    bar.finish();
+
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.3?}", elapsed);
+    SetSystem {
+        points: res_points,
+        sets: res_sets,
+    }
+}
+
+fn update_weight<const D: usize>(
+    s: &Set<D>,
+    sout: &Vec<usize>,
+    sin: &Vec<usize>,
+    initial_weight: u128,
+    tosort: &Vec<(usize, &u128)>,
+    n: usize,
+    t: i32,
+    start: usize,
+) -> u128 {
+    let mut res = initial_weight;
+    let mut test = false;
+    if s.points[start] {
+        for k in sout.iter() {
+            if test {
+                break;
+            }
+            for l in 0..(n as i32 / t - 1) as usize {
+                if *k == tosort[l].0 {
+                    res += 1;
+                    test = true;
+                    break;
+                }
+            }
+        }
+    } else {
+        for k in sin.iter() {
+            if test {
+                break;
+            }
+            for l in 0..(n as i32 / t - 1) as usize {
+                if *k == tosort[l].0 {
+                    res += 1;
+                    test = true;
+                    break;
+                }
+            }
+        }
+    }
+    res
+}
+
+fn distance<const D: usize>(
+    ss: &SetSystem<D>,
+    available: &Vec<bool>,
+    start: usize,
+    k: i32,
+    sets_weight: &Vec<u128>,
+    sin: &Vec<Vec<usize>>,
+    sout: &Vec<Vec<usize>>,
+) -> Vec<u128> {
+    let n = ss.points.len();
+    let mut res = vec![0; n];
+    for i in 0..n {
+        if available[i] {
+            res[i] = 1;
+        }
+    }
+    for _ in 0..k {
+        let s = exponential_pick(sets_weight);
+        if ss.sets[s].points[start] {
+            for i in sout[s].iter() {
+                if available[*i] {
+                    res[*i] += 1 << sets_weight[s];
+                }
+            }
+        } else {
+            for i in sin[s].iter() {
+                if available[*i] {
+                    res[*i] += 1 << sets_weight[s];
+                }
+            }
+        }
+    }
+    res
+}
+
+fn exponential_pick(w: &Vec<u128>) -> usize {
+    let mut total: u128 = 0;
+    let mut rng = rand::thread_rng();
+    for i in 0..w.len() {
+        total += 1 << w[i];
+    }
+    let stop_at = rng.gen_range(0..total);
+    let mut partial_sum = 0;
+    let mut i: usize = 0;
+    while i < w.len() && (partial_sum + (1 << w[i])) < stop_at {
+        partial_sum += 1 << w[i];
+        i += 1;
+    }
+    i
 }

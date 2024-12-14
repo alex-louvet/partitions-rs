@@ -26,20 +26,35 @@ fn main() {
     //let ss: SetSystem<D> = SetSystem::grid(n);
     ss.to_file("ss.txt");
     let ss2 = algos::part_min(&ss, t);
-    let intersections = intersections(&ss2.sets, &ss.sets);
+    let ss3 = algos::part_at_once(&ss, t, 10 * ((n as f32).ln()).floor() as i32);
+    let intersections1 = intersections(&ss2.sets, &ss.sets);
+    let intersections2 = intersections(&ss3.sets, &ss.sets);
     println!(
         "Intersections : max -> {}, avg -> {}, min -> {}",
-        intersections
+        intersections1
             .iter()
             .max()
             .expect("Fail to determine maximum"),
-        mean(&intersections),
-        intersections
+        mean(&intersections1),
+        intersections1
+            .iter()
+            .min()
+            .expect("Fail to determine intersection min")
+    );
+    println!(
+        "Intersections : max -> {}, avg -> {}, min -> {}",
+        intersections2
+            .iter()
+            .max()
+            .expect("Fail to determine maximum"),
+        mean(&intersections2),
+        intersections2
             .iter()
             .min()
             .expect("Fail to determine intersection min")
     );
     ss2.to_file("res.txt");
+    ss3.to_file("res2.txt");
 }
 
 fn mean(v: &Vec<i32>) -> f32 {

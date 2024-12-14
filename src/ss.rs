@@ -2,7 +2,7 @@ use num_integer::Roots;
 use rand::seq::SliceRandom;
 use rulinalg::matrix::decomposition::PartialPivLu;
 use rulinalg::matrix::Matrix;
-use std::{fs, io::Write};
+use std::{fs, io::BufWriter, io::Write};
 
 #[derive(Debug, Clone)]
 pub struct Point<const D: usize> {
@@ -78,12 +78,20 @@ impl<const D: usize> SetSystem<D> {
         for d in 0..D {
             for i in 0..n.nth_root(D as u32) {
                 let mut temp: Vec<bool> = vec![false; n as usize];
+                let mut temp2: Vec<bool> = vec![false; n as usize];
                 for p in points.iter() {
                     temp[p.index] =
-                        p.coordinates[d] * f32::powf(n as f32, 1.0 / (D as f32)) > i as f32
+                        p.coordinates[d] * f32::powf(n as f32, 1.0 / (D as f32)) > i as f32;
+                    temp2[p.index] =
+                        p.coordinates[d] * f32::powf(n as f32, 1.0 / (D as f32)) > i as f32;
                 }
                 sets.push(Set {
                     points: temp,
+                    index,
+                });
+                index += 1;
+                sets.push(Set {
+                    points: temp2,
                     index,
                 });
                 index += 1;
@@ -105,7 +113,7 @@ impl<const D: usize> SetSystem<D> {
             });
         }
         let mut sets = Vec::new();
-        for j in 0..m as usize {
+        for j in 0..(m / 2) as usize {
             let sample: Vec<_> = points.choose_multiple(&mut rand::thread_rng(), D).collect();
             let mut v = Vec::new();
             for s in sample.iter() {
@@ -116,6 +124,7 @@ impl<const D: usize> SetSystem<D> {
             let lu = PartialPivLu::decompose(mat).expect("Matrix is invertible");
             let y = lu.solve(b).expect("Matrix is invertible.");
             let mut set = vec![false; points.len()];
+            let mut set_c = vec![false; points.len()];
             for (i, p) in points.iter().enumerate() {
                 let mut temp = 0.0;
                 for k in 0..D {
@@ -123,11 +132,17 @@ impl<const D: usize> SetSystem<D> {
                 }
                 if temp > 1.0 {
                     set[i] = true;
+                } else {
+                    set_c[i] = true;
                 }
             }
             sets.push(Set {
                 points: set,
-                index: j,
+                index: 2 * j,
+            });
+            sets.push(Set {
+                points: set_c,
+                index: 2 * j + 1,
             });
         }
         SetSystem { points, sets }
@@ -166,19 +181,22 @@ impl<const D: usize> SetSystem<D> {
     }
 
     pub fn to_file(&self, filename: &str) -> () {
-        let mut file = fs::File::create(filename).expect("Fail to create file");
+        let mut file = BufWriter::new(fs::File::create(filename).expect("Fail to create file"));
         for x in self.points.iter() {
             for c in x.coordinates.iter() {
-                write!(file, "{},", c).expect("Fail to write");
+                file.write(c.to_string().as_bytes()).expect("Fail to write");
+                file.write(b",").expect("Fail to write");
             }
-            write!(file, "\n").expect("Fail to write");
+            file.write(b"\n").expect("Fail to write");
         }
-        write!(file, "sets\n").expect("Fail to write");
+        file.write(b"sets\n").expect("Fail to write");
         for x in self.sets.iter() {
             for c in x.points.iter() {
-                write!(file, "{},", *c as i8).expect("Fail to write");
+                file.write((*c as i8).to_string().as_bytes())
+                    .expect("Fail to write");
+                file.write(b",").expect("Fail to write");
             }
-            write!(file, "\n").expect("Fail to write");
+            file.write(b"\n").expect("Fail to write");
         }
     }
 }
