@@ -30,7 +30,7 @@ pub fn part_min<const D: usize>(ss: &SetSystem<D>, t: i32) -> SetSystem<D> {
     //List all points not yet in  a part
     let mut available_pts: Vec<bool> = vec![true; n];
     let mut pt_weight: Vec<u128> = vec![0; n];
-    let mut set_weight: Vec<u128> = vec![0; m];
+    let mut set_weight: Vec<u32> = vec![0; m];
 
     let bar = ProgressBar::new(t as u64);
     //Part building
@@ -151,7 +151,7 @@ pub fn part_at_once<const D: usize>(ss: &SetSystem<D>, t: i32, k: i32) -> SetSys
 
     //List all points not yet in  a part
     let mut available_pts: Vec<bool> = vec![true; n];
-    let mut set_weight: Vec<u128> = vec![0; m];
+    let mut set_weight: Vec<u32> = vec![0; m];
 
     let bar = ProgressBar::new(t as u64);
     //Part building
@@ -182,6 +182,7 @@ pub fn part_at_once<const D: usize>(ss: &SetSystem<D>, t: i32, k: i32) -> SetSys
         }
         set_weight = (0..m)
             .into_par_iter()
+            //.into_iter()
             .map(|j| {
                 update_weight(
                     &ss.sets[j],
@@ -225,42 +226,30 @@ fn update_weight<const D: usize>(
     s: &Set<D>,
     sout: &Vec<usize>,
     sin: &Vec<usize>,
-    initial_weight: u128,
+    initial_weight: u32,
     tosort: &Vec<(usize, &u128)>,
     n: usize,
     t: i32,
     start: usize,
-) -> u128 {
-    let mut res = initial_weight;
-    let mut test = false;
+) -> u32 {
     if s.points[start] {
-        for k in sout.iter() {
-            if test {
-                break;
-            }
-            for l in 0..(n as i32 / t - 1) as usize {
+        for l in (n as i32 / t - 1) as usize..=0 {
+            for k in sout.iter() {
                 if *k == tosort[l].0 {
-                    res += 1;
-                    test = true;
-                    break;
+                    return initial_weight + 1;
                 }
             }
         }
     } else {
-        for k in sin.iter() {
-            if test {
-                break;
-            }
-            for l in 0..(n as i32 / t - 1) as usize {
+        for l in (n as i32 / t - 1) as usize..=0 {
+            for k in sin.iter() {
                 if *k == tosort[l].0 {
-                    res += 1;
-                    test = true;
-                    break;
+                    return initial_weight + 1;
                 }
             }
         }
     }
-    res
+    initial_weight
 }
 
 fn distance<const D: usize>(
@@ -268,7 +257,7 @@ fn distance<const D: usize>(
     available: &Vec<bool>,
     start: usize,
     k: i32,
-    sets_weight: &Vec<u128>,
+    sets_weight: &Vec<u32>,
     sin: &Vec<Vec<usize>>,
     sout: &Vec<Vec<usize>>,
 ) -> Vec<u128> {
@@ -298,7 +287,7 @@ fn distance<const D: usize>(
     res
 }
 
-fn exponential_pick(w: &Vec<u128>) -> usize {
+fn exponential_pick(w: &Vec<u32>) -> usize {
     let mut total: u128 = 0;
     let mut rng = rand::thread_rng();
     for i in 0..w.len() {

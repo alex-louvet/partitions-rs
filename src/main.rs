@@ -16,17 +16,17 @@ fn main() {
     let t: i32 = args[2]
         .parse::<i32>()
         .expect("t can not be interpreted as i32");
-    let ss: SetSystem<D> = SetSystem::rhs(n, ((n as f32) * (n as f32).ln()).floor() as i32);
+    //let ss: SetSystem<D> = SetSystem::rhs(n, ((n as f32) * (n as f32).ln()).floor() as i32);
     //for p in ss.points.iter() {
     //    println!("{:?}", p);
     //}
     //for p in ss.sets.iter() {
     //    println!("{:?}", p);
     //}
-    //let ss: SetSystem<D> = SetSystem::grid(n);
+    let ss: SetSystem<D> = SetSystem::grid(n);
     ss.to_file("ss.txt");
-    let ss2 = algos::part_min(&ss, t);
     let ss3 = algos::part_at_once(&ss, t, 10 * ((n as f32).ln()).floor() as i32);
+    let ss2 = algos::part_min(&ss, t);
     let intersections1 = intersections(&ss2.sets, &ss.sets);
     let intersections2 = intersections(&ss3.sets, &ss.sets);
     println!(
