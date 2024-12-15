@@ -199,4 +199,6 @@ impl<const D: usize> SetSystem<D> {
             file.write(b"\n").expect("Fail to write");
         }
     }
+
+    // TODO : from_file
 }

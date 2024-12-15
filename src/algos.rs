@@ -169,7 +169,7 @@ pub fn part_at_once<const D: usize>(ss: &SetSystem<D>, t: i32, k: i32) -> SetSys
         part[start] = true;
         available_pts[start] = false;
         let distances = distance(&ss, &available_pts, start, k, &set_weight, &sin, &sout);
-        let mut tosort: Vec<(usize, &u128)> = Vec::new();
+        let mut tosort: Vec<(usize, &u64)> = Vec::new();
         for x in distances.iter().enumerate() {
             if available_pts[x.0] {
                 tosort.push(x);
@@ -227,7 +227,7 @@ fn update_weight<const D: usize>(
     sout: &Vec<usize>,
     sin: &Vec<usize>,
     initial_weight: u32,
-    tosort: &Vec<(usize, &u128)>,
+    tosort: &Vec<(usize, &u64)>,
     n: usize,
     t: i32,
     start: usize,
@@ -260,7 +260,7 @@ fn distance<const D: usize>(
     sets_weight: &Vec<u32>,
     sin: &Vec<Vec<usize>>,
     sout: &Vec<Vec<usize>>,
-) -> Vec<u128> {
+) -> Vec<u64> {
     let n = ss.points.len();
     let mut res = vec![0; n];
     for i in 0..n {
@@ -268,18 +268,25 @@ fn distance<const D: usize>(
             res[i] = 1;
         }
     }
+    let mut limit = 0;
+    let range = (k as f32).log2() as u32;
+    if !*sets_weight.iter().max().expect("No max") <= range {
+        limit = *sets_weight.iter().max().expect("No max") - range;
+    }
     for _ in 0..k {
-        let s = exponential_pick(sets_weight);
-        if ss.sets[s].points[start] {
-            for i in sout[s].iter() {
-                if available[*i] {
-                    res[*i] += 1 << sets_weight[s];
+        let s = exponential_pick(sets_weight, range);
+        if sets_weight[s] >= limit {
+            if ss.sets[s].points[start] {
+                for i in sout[s].iter() {
+                    if available[*i] {
+                        res[*i] += 1 << (sets_weight[s] - limit);
+                    }
                 }
-            }
-        } else {
-            for i in sin[s].iter() {
-                if available[*i] {
-                    res[*i] += 1 << sets_weight[s];
+            } else {
+                for i in sin[s].iter() {
+                    if available[*i] {
+                        res[*i] += 1 << (sets_weight[s] - limit);
+                    }
                 }
             }
         }
@@ -287,17 +294,25 @@ fn distance<const D: usize>(
     res
 }
 
-fn exponential_pick(w: &Vec<u32>) -> usize {
-    let mut total: u128 = 0;
+fn exponential_pick(w: &Vec<u32>, range: u32) -> usize {
+    let mut total: u64 = 0;
     let mut rng = rand::thread_rng();
+    let mut limit = 0;
+    if !*w.iter().max().expect("No max") <= range {
+        limit = *w.iter().max().expect("No max") - range;
+    }
     for i in 0..w.len() {
-        total += 1 << w[i];
+        if limit <= w[i] {
+            total += 1 << (w[i] - limit);
+        }
     }
     let stop_at = rng.gen_range(0..total);
     let mut partial_sum = 0;
     let mut i: usize = 0;
-    while i < w.len() && (partial_sum + (1 << w[i])) < stop_at {
-        partial_sum += 1 << w[i];
+    while i < w.len() && (limit > w[i] || (partial_sum + (1 << (w[i] - limit))) < stop_at) {
+        if limit <= w[i] {
+            partial_sum += 1 << (w[i] - limit);
+        }
         i += 1;
     }
     i
