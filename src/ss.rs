@@ -244,5 +244,6 @@ impl SetSystem {
             }
             file.write(b"\n").expect("Fail to write");
         }
+        println!("Set system written to file: {}", filename);
     }
 }
