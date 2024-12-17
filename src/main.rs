@@ -173,7 +173,7 @@ fn main() {
             }
             match &args.output {
                 None => (),
-                Some(x) => ss.to_file(x.as_str()),
+                Some(x) => res.to_file(x.as_str()),
             }
         }
     }
