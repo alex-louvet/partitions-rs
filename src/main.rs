@@ -27,6 +27,8 @@ enum Commands {
     Generate(GenerateArgs),
     /// Partition a set system
     Partition(PartitionArgs),
+    /// Computes the intersection of a partition with a set system
+    Intersections(IntersectionsArgs),
 }
 
 #[derive(Args)]
@@ -69,6 +71,17 @@ struct PartitionArgs {
     /// Write the result stats to a file
     #[arg(short, long)]
     write: Option<String>,
+}
+
+#[derive(Args)]
+struct IntersectionsArgs {
+    /// Set system file
+    #[arg(short, long)]
+    setsystem: String,
+
+    /// Partition file
+    #[arg(short, long)]
+    partition: String,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]
@@ -175,6 +188,23 @@ fn main() {
                 None => (),
                 Some(x) => res.to_file(x.as_str()),
             }
+        }
+        Commands::Intersections(args) => {
+            let ss: SetSystem = SetSystem::from_file(&args.setsystem);
+            let part: SetSystem = SetSystem::from_file(&args.partition);
+            let intersections = intersections(&part.sets, &ss.sets);
+            println!(
+                "Intersections : max -> {}, avg -> {}, min -> {}",
+                intersections
+                    .iter()
+                    .max()
+                    .expect("Fail to determine maximum"),
+                mean(&intersections),
+                intersections
+                    .iter()
+                    .min()
+                    .expect("Fail to determine intersection min")
+            );
         }
     }
 }
