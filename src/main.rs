@@ -33,7 +33,7 @@ enum Commands {
 
 #[derive(Args)]
 struct GenerateArgs {
-    /// Type of set system to generate
+    /// Type of set system to generate (grid or rhs)
     #[arg(short, long)]
     sstype: String,
 
@@ -60,7 +60,7 @@ struct PartitionArgs {
     #[arg(short, long)]
     tpart: i32,
 
-    /// Type of set system to generate
+    /// File containing the set system to partition
     #[arg(short, long)]
     setsystem: String,
 
