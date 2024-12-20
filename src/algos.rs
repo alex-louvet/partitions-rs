@@ -1,6 +1,5 @@
 use crate::ss::{Point, Set, SetSystem};
 use indicatif::ProgressBar;
-use num_integer::Roots;
 use rand::Rng;
 use rayon::prelude::*;
 use std::time::{Duration, Instant};
@@ -200,10 +199,13 @@ pub fn part_potential(ss: &SetSystem, t: i32) -> (SetSystem, Duration) {
             let mut min = n + 1;
             for l in 0..n {
                 if available_pts[l] {
-                    if ((part_weight as i64) + pt_weight[l] as i64)
-                        * ((n as i64) - (i as i64) * (n as i64) / (t as i64)).nth_root(d as u32)
-                        / (sets_weight as i64)
-                        <= 2 * (p as i64).nth_root(d as u32)
+                    if ((part_weight as f64) + pt_weight[l] as f64)
+                        * f64::powf(
+                            (n as f64) - (i as f64) * (n as f64) / (t as f64),
+                            1.0 / (d as f64),
+                        )
+                        / sets_weight as f64
+                        <= 2.0 * f64::powf(p as f64, 1.0 / (d as f64))
                     {
                         min = l;
                         break;
