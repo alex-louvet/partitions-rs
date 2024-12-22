@@ -64,13 +64,17 @@ struct PartitionArgs {
     #[arg(short, long)]
     setsystem: String,
 
+    /// Number of rounds to simulate disctance function in the parallel algorithm
+    #[arg(short, long)]
+    warmup: Option<i32>,
+
     /// Name of file to save the result
     #[arg(short, long)]
     output: Option<String>,
 
     /// Write the result stats to a file
     #[arg(short, long)]
-    write: Option<String>,
+    results: Option<String>,
 }
 
 #[derive(Args)]
@@ -137,9 +141,10 @@ fn main() {
                 Algo::Min => {
                     (res, time) = algos::part_min(&ss, t);
                 }
-                Algo::AO => {
-                    (res, time) = algos::part_at_once(&ss, t, (n as f32).sqrt() as i32);
-                }
+                Algo::AO => match args.warmup {
+                    None => (res, time) = algos::part_at_once(&ss, t, (n as f32).sqrt() as i32),
+                    Some(w) => (res, time) = algos::part_at_once(&ss, t, w),
+                },
                 Algo::Potential => {
                     (res, time) = algos::part_potential(&ss, t);
                 }
@@ -157,7 +162,7 @@ fn main() {
                     .min()
                     .expect("Fail to determine intersection min")
             );
-            match &args.write {
+            match &args.results {
                 None => (),
                 Some(x) => {
                     let mut file = OpenOptions::new().write(true).append(true).open(x).unwrap();
