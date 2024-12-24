@@ -2,6 +2,7 @@
 extern crate rulinalg;
 use clap::{Args, Parser, Subcommand};
 use rayon::prelude::*;
+use std::cmp;
 use std::fmt;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -143,7 +144,7 @@ fn main() {
                     (res, time) = algos::part_min(&ss, t);
                 }
                 Algo::AO => match args.warmup {
-                    None => (res, time) = algos::part_at_once(&ss, t, t / 10),
+                    None => (res, time) = algos::part_at_once(&ss, t, cmp::max(t / 10, 30)),
                     Some(w) => {
                         (res, time) = algos::part_at_once(&ss, t, w);
                         warmup = w
