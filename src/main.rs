@@ -137,13 +137,17 @@ fn main() {
             let n = ss.points.len();
             let res: SetSystem;
             let time: Duration;
+            let mut warmup = (n as f32).sqrt() as i32;
             match args.algo {
                 Algo::Min => {
                     (res, time) = algos::part_min(&ss, t);
                 }
                 Algo::AO => match args.warmup {
-                    None => (res, time) = algos::part_at_once(&ss, t, (n as f32).sqrt() as i32),
-                    Some(w) => (res, time) = algos::part_at_once(&ss, t, w),
+                    None => (res, time) = algos::part_at_once(&ss, t, t / 10),
+                    Some(w) => {
+                        (res, time) = algos::part_at_once(&ss, t, w);
+                        warmup = w
+                    }
                 },
                 Algo::Potential => {
                     (res, time) = algos::part_potential(&ss, t);
@@ -180,7 +184,7 @@ fn main() {
                         intersections.iter().max().expect(""),
                         mean(&intersections),
                         intersections.iter().min().expect(""),
-                        0,
+                        warmup,
                         time.as_secs_f64(),
                         0,
                         0
