@@ -144,7 +144,7 @@ fn main() {
                     (res, time) = algos::part_min(&ss, t);
                 }
                 Algo::AO => match args.warmup {
-                    None => (res, time) = algos::part_at_once(&ss, t, cmp::max(t / 10, 30)),
+                    None => (res, time) = algos::part_at_once(&ss, t, cmp::max(t, 30)),
                     Some(w) => {
                         (res, time) = algos::part_at_once(&ss, t, w);
                         warmup = w
